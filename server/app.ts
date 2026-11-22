@@ -1038,7 +1038,7 @@ This package contains the complete RelayDesk platform:
 - Studio & AI Chat Optimizer
 - Client Dashboard (Live WhatsApp Inbox, Booking Confirmation Alerts, CSV Reports)
 - Per-Client Portal Login (credentials are set through environment configuration)
-- Vercel Serverless API (\`vercel.json\` + \`api/[...path].ts\`)
+- Vercel Serverless API (\`vercel.json\` + \`api/index.ts\`)
 - Supabase PostgreSQL Schema (\`supabase/schema.sql\`)
 
 ## Step 1: Initialize Supabase
