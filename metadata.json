@@ -1,0 +1,6 @@
+{
+  "name": "RelayDesk",
+  "description": "White-label WhatsApp Business AI agent studio and customizable multi-client bot codebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
