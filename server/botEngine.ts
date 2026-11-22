@@ -23,6 +23,45 @@ function getAiClient(): GoogleGenAI {
   });
 }
 
+
+type GenerateParams = Parameters<GoogleGenAI['models']['generateContent']>[0];
+
+const PRIMARY_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-4-hydrogen';
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL?.trim() || 'gemini-2.5-flash';
+
+function isTransientAiError(err: unknown): boolean {
+  const text = `${(err as { status?: unknown })?.status ?? ''} ${(err as Error)?.message ?? ''}`;
+  return /\b(429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand/i.test(text);
+}
+
+/**
+ * Gemini sometimes answers 503 "high demand". Retry the main model with a short
+ * backoff, then switch to a fallback model so the bot keeps replying.
+ */
+async function generateWithRetry(ai: GoogleGenAI, params: Omit<GenerateParams, 'model'>) {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await ai.models.generateContent({ ...params, model: PRIMARY_MODEL });
+    } catch (err) {
+      lastError = err;
+      if (!isTransientAiError(err)) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+    }
+  }
+  try {
+    // Fallback model may not support the primary model's thinking settings.
+    const { thinkingConfig: _ignored, ...fallbackConfig } = (params.config ?? {}) as Record<string, unknown>;
+    return await ai.models.generateContent({
+      ...params,
+      model: FALLBACK_MODEL,
+      config: fallbackConfig as GenerateParams['config'],
+    });
+  } catch {
+    throw lastError;
+  }
+}
+
 const TONE_GUIDE: Record<ClientBotConfig['tone'], string> = {
   warm: 'Warm, empathetic, reassuring, and hospitable while keeping messages concise for mobile reading.',
   concise: 'Direct, crisp, efficient, and clear. Avoid fluff; get straight to pricing, times, or next steps.',
@@ -137,7 +176,7 @@ export interface ConversationTurn {
   text: string;
 }
 
-export async function generateBotReply(
+async function generateBotReplyInner(
   client: ClientBotConfig,
   incomingMessage: string,
   history: ConversationTurn[] = [],
@@ -154,8 +193,7 @@ export async function generateBotReply(
     ? `Recent WhatsApp conversation:\n${transcript}\n\nLatest Customer WhatsApp message:\n${incomingMessage}`
     : `Customer WhatsApp message:\n${incomingMessage}`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-4-hydrogen',
+  const response = await generateWithRetry(ai, {
     contents: prompt,
     config: {
       systemInstruction: buildSystemInstruction(client),
@@ -242,6 +280,32 @@ export async function generateBotReply(
     detectedGuestCount: parsed.detectedGuestCount || '',
     latencyMs: Date.now() - start,
   };
+}
+
+/** Never leave a WhatsApp customer unanswered if the AI is down: send the business fallback message. */
+export async function generateBotReply(
+  client: ClientBotConfig,
+  incomingMessage: string,
+  history: ConversationTurn[] = [],
+): Promise<SimulationResponse> {
+  const start = Date.now();
+  try {
+    return await generateBotReplyInner(client, incomingMessage, history);
+  } catch (err) {
+    console.error('AI reply failed, using fallback message:', err);
+    return {
+      reply: client.fallbackMessage,
+      intent: 'handoff',
+      handoffTriggered: true,
+      handoffReason: 'AI service temporarily unavailable.',
+      quickReplies: [],
+      sourcesUsed: [],
+      detectedServiceOrRoom: '',
+      detectedDate: '',
+      detectedGuestCount: '',
+      latencyMs: Date.now() - start,
+    };
+  }
 }
 
 function isBlockedHostname(hostname: string): boolean {
@@ -331,8 +395,7 @@ export async function extractKnowledgeFromWebsite(
   }
 
   const ai = getAiClient();
-  const response = await ai.models.generateContent({
-    model: 'gemini-4-hydrogen',
+  const response = await generateWithRetry(ai, {
     contents: `Extract structured WhatsApp customer-support Knowledge Base documents for "${businessName}" from the webpage content below (${parsedUrl.toString()}).\n\nWEBPAGE TEXT:\n${pageText}`,
     config: {
       systemInstruction:
@@ -394,8 +457,7 @@ export async function optimizeChatPreferencesWithAi(
     priorityTopics: [],
   };
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-4-hydrogen',
+  const response = await generateWithRetry(ai, {
     contents: [
       `Business: ${client.businessName} (${client.industry})`,
       `Services: ${client.services.map((s) => `${s.name} (${s.price})`).join('; ') || 'None'}`,
@@ -496,8 +558,7 @@ export async function suggestHostReplyWithAi(
     .map((m) => `${m.role.toUpperCase()}: ${m.text}`)
     .join('\n');
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-4-hydrogen',
+  const response = await generateWithRetry(ai, {
     contents: [
       `Customer: ${thread.customerName} (${thread.customerPhone})`,
       thread.bookingSummary
