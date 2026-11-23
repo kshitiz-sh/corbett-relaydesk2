@@ -27,39 +27,55 @@ function getAiClient(): GoogleGenAI {
 type GenerateParams = Parameters<GoogleGenAI['models']['generateContent']>[0];
 
 const PRIMARY_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-4-hydrogen';
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL?.trim() || 'gemini-2.5-flash';
+const FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODEL?.trim() || 'gemini-2.5-flash,gemini-2.5-flash-lite')
+  .split(',')
+  .map((m) => m.trim())
+  .filter(Boolean);
+
+function errorText(err: unknown): string {
+  return `${(err as { status?: unknown })?.status ?? ''} ${(err as Error)?.message ?? ''}`;
+}
+
+function isQuotaError(err: unknown): boolean {
+  return /\b429\b|RESOURCE_EXHAUSTED|quota/i.test(errorText(err));
+}
 
 function isTransientAiError(err: unknown): boolean {
-  const text = `${(err as { status?: unknown })?.status ?? ''} ${(err as Error)?.message ?? ''}`;
-  return /\b(429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand/i.test(text);
+  return isQuotaError(err) || /\b(500|502|503|504)\b|UNAVAILABLE|overloaded|high demand/i.test(errorText(err));
 }
 
 /**
- * Gemini sometimes answers 503 "high demand". Retry the main model with a short
- * backoff, then switch to a fallback model so the bot keeps replying.
+ * Gemini can answer 503 "high demand" or 429 "quota". On 503 retry the main model once
+ * more; on 429 do not retry (it only burns more quota). Then try backup models in order so
+ * the bot keeps replying.
  */
 async function generateWithRetry(ai: GoogleGenAI, params: Omit<GenerateParams, 'model'>) {
   let lastError: unknown;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const attempts = 2;
+  for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       return await ai.models.generateContent({ ...params, model: PRIMARY_MODEL });
     } catch (err) {
       lastError = err;
       if (!isTransientAiError(err)) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+      if (isQuotaError(err)) break;
+      await new Promise((resolve) => setTimeout(resolve, 800));
     }
   }
-  try {
-    // Fallback model may not support the primary model's thinking settings.
-    const { thinkingConfig: _ignored, ...fallbackConfig } = (params.config ?? {}) as Record<string, unknown>;
-    return await ai.models.generateContent({
-      ...params,
-      model: FALLBACK_MODEL,
-      config: fallbackConfig as GenerateParams['config'],
-    });
-  } catch {
-    throw lastError;
+  // Backup models may not support the primary model's thinking settings.
+  const { thinkingConfig: _ignored, ...fallbackConfig } = (params.config ?? {}) as Record<string, unknown>;
+  for (const model of FALLBACK_MODELS) {
+    try {
+      return await ai.models.generateContent({
+        ...params,
+        model,
+        config: fallbackConfig as GenerateParams['config'],
+      });
+    } catch (err) {
+      console.error(`Gemini fallback model ${model} failed:`, errorText(err).slice(0, 300));
+    }
   }
+  throw lastError;
 }
 
 const TONE_GUIDE: Record<ClientBotConfig['tone'], string> = {
