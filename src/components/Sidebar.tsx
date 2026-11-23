@@ -1,10 +1,8 @@
 import {
   Bot,
   Code2,
-  FolderKanban,
   LayoutDashboard,
   Lock,
-  Plus,
   Webhook,
 } from 'lucide-react';
 import type { ClientBotConfig } from '../../shared/types.ts';
@@ -24,7 +22,6 @@ interface SidebarProps {
 const NAV_ITEMS: Array<{ id: WorkspaceView; label: string; icon: typeof Bot }> = [
   { id: 'studio', label: 'Agent Studio', icon: Bot },
   { id: 'dashboard', label: 'Client Dashboard', icon: LayoutDashboard },
-  { id: 'clients', label: 'Client Templates', icon: FolderKanban },
   { id: 'export', label: 'Export Codebase', icon: Code2 },
   { id: 'webhook', label: 'Webhook & Deploy', icon: Webhook },
 ];
@@ -35,7 +32,6 @@ export function Sidebar({
   clients,
   activeClientId,
   onSelectClient,
-  onOpenNewClient,
   onOpenClientPortal,
 }: SidebarProps) {
   return (
@@ -78,15 +74,7 @@ export function Sidebar({
 
         <div className="mt-4 pt-4 border-t border-slate-200 px-3">
           <div className="flex items-center justify-between px-2 mb-2">
-            <span className="text-xs font-semibold text-slate-500">Client Profiles</span>
-            <button
-              type="button"
-              onClick={onOpenNewClient}
-              className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-800 transition-colors whitespace-nowrap shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              New Client
-            </button>
+            <span className="text-xs font-semibold text-slate-500">Client</span>
           </div>
 
           <div className="space-y-0.5 max-h-[340px] overflow-y-auto pr-1">

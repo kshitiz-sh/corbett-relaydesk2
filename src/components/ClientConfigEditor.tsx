@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Check,
-  Copy,
   Eye,
   EyeOff,
   Globe,
@@ -69,7 +68,6 @@ export function ClientConfigEditor({
   onChange,
   onSave,
   onUpdateCredentials,
-  onClone,
   isDirty,
   isSaving,
 }: ClientConfigEditorProps) {
@@ -291,14 +289,6 @@ export function ClientConfigEditor({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={onClone}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0"
-          >
-            <Copy className="w-3.5 h-3.5" />
-            Clone for New Client
-          </button>
           <button
             type="button"
             onClick={() => void onSave()}
