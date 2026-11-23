@@ -791,7 +791,7 @@ export function createApiApp(): Express {
   const handleWebhookVerify = async (req: Request, res: Response) => {
     try {
       const mode = req.query['hub.mode'];
-      const token = typeof req.query['hub.verify_token'] === 'string' ? req.query['hub.verify_token'] : '';
+      const token = typeof req.query['hub.verify_token'] === 'string' ? req.query['hub.verify_token'].trim() : '';
       const challenge = req.query['hub.challenge'];
       const slug = req.params.slug;
 
@@ -799,9 +799,11 @@ export function createApiApp(): Express {
       const validTokens = [
         client?.whatsappVerifyToken,
         process.env.WHATSAPP_VERIFY_TOKEN,
-      ].filter((t): t is string => Boolean(t));
+      ]
+        .map((t) => (typeof t === 'string' ? t.trim() : ''))
+        .filter(Boolean);
 
-      if (mode === 'subscribe' && validTokens.includes(token)) {
+      if (mode === 'subscribe' && token && validTokens.includes(token)) {
         res.status(200).send(String(challenge ?? ''));
         return;
       }
