@@ -27,7 +27,7 @@ function getAiClient(): GoogleGenAI {
 type GenerateParams = Parameters<GoogleGenAI['models']['generateContent']>[0];
 
 const PRIMARY_MODEL = process.env.GEMINI_MODEL?.trim() || 'gemini-4-hydrogen';
-const FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODEL?.trim() || 'gemini-2.5-flash,gemini-2.5-flash-lite')
+const FALLBACK_MODELS = (process.env.GEMINI_FALLBACK_MODEL?.trim() || 'gemini-3.8-flash,gemini-3.5-flash-lite')
   .split(',')
   .map((m) => m.trim())
   .filter(Boolean);
