@@ -45,35 +45,36 @@ function isTransientAiError(err: unknown): boolean {
 }
 
 /**
- * Gemini can answer 503 "high demand" or 429 "quota". On 503 retry the main model once
- * more; on 429 do not retry (it only burns more quota). Then try backup models in order so
- * the bot keeps replying.
+ * Gemini can answer 503 "high demand" or 429 "quota". Try the main model, then each backup
+ * model in turn; if every model is busy, wait briefly and make one more pass (within a time
+ * budget so the serverless function and WhatsApp webhook do not time out).
+ * 429 on the main model is not retried (it only burns more quota).
  */
 async function generateWithRetry(ai: GoogleGenAI, params: Omit<GenerateParams, 'model'>) {
+  const startedAt = Date.now();
+  const TIME_BUDGET_MS = 18000;
   let lastError: unknown;
-  const attempts = 2;
-  for (let attempt = 0; attempt < attempts; attempt++) {
+  // Backup models may not support the primary model's thinking settings.
+  const { thinkingConfig: _ignored, ...fallbackConfig } = (params.config ?? {}) as Record<string, unknown>;
+  const backupConfig = fallbackConfig as GenerateParams['config'];
+
+  for (let round = 0; round < 2; round++) {
     try {
       return await ai.models.generateContent({ ...params, model: PRIMARY_MODEL });
     } catch (err) {
       lastError = err;
       if (!isTransientAiError(err)) throw err;
-      if (isQuotaError(err)) break;
-      await new Promise((resolve) => setTimeout(resolve, 800));
     }
-  }
-  // Backup models may not support the primary model's thinking settings.
-  const { thinkingConfig: _ignored, ...fallbackConfig } = (params.config ?? {}) as Record<string, unknown>;
-  for (const model of FALLBACK_MODELS) {
-    try {
-      return await ai.models.generateContent({
-        ...params,
-        model,
-        config: fallbackConfig as GenerateParams['config'],
-      });
-    } catch (err) {
-      console.error(`Gemini fallback model ${model} failed:`, errorText(err).slice(0, 300));
+    for (const model of FALLBACK_MODELS) {
+      if (Date.now() - startedAt > TIME_BUDGET_MS) throw lastError;
+      try {
+        return await ai.models.generateContent({ ...params, model, config: backupConfig });
+      } catch (err) {
+        console.error(`Gemini fallback model ${model} failed:`, errorText(err).slice(0, 300));
+      }
     }
+    if (Date.now() - startedAt > TIME_BUDGET_MS) break;
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
   throw lastError;
 }
