@@ -130,6 +130,16 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
         sourceLabel: 'Host SOP',
         enabled: true,
       },
+      {
+        id: 'kb-corbett-4',
+        title: 'Booking Links & Location',
+        category: 'Bookings',
+        content:
+          'Direct booking (website): https://bookingengine.stayflexi.com/?phid=0xodowk8 . Airbnb listings: 2BHK Family Room https://www.airbnb.co.in/h/2bhkfamilyroom ; Premium Spacious Room https://www.airbnb.co.in/h/premiumspaciousroom ; Premium Cozy Room https://www.airbnb.co.in/h/rajaecozyroom . Google Maps location: https://maps.app.goo.gl/Z6yscJWGHaMvBDdC6 . When a guest wants to book or asks how to book, share the direct booking link (and the matching Airbnb link if they prefer Airbnb); also mention the host can confirm on +91 9411561965. When asked for location or directions, share the Google Maps link.',
+        sourceType: 'manual',
+        sourceLabel: 'Host',
+        enabled: true,
+      },
     ],
     chatPreferences: {
       replyLength: 'balanced',
