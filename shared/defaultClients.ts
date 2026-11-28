@@ -4,6 +4,7 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
   {
     id: 'cli-corbett-rajae-homestay',
     slug: 'corbett-rajae-homestay',
+    leadAlertPhone: '919761599864',
     propertyImages: [
       { url: 'https://corbett-rajae-relaydesk.vercel.app/property/property-exterior.jpg', caption: 'The Corbett Rajae Homestay' },
       { url: 'https://corbett-rajae-relaydesk.vercel.app/property/terrace-kitchen.jpg', caption: 'Terrace & Pahadi Kitchen' },

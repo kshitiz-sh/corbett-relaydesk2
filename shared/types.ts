@@ -62,6 +62,8 @@ export interface ClientPortalAuth {
 
 export interface ClientBotConfig {
   /** Photos sent automatically on WhatsApp when a guest asks about rooms (public https URLs). */
+  /** WhatsApp number (with country code) that receives a short summary whenever a guest shows booking interest. */
+  leadAlertPhone?: string;
   roomImages?: RoomImage[];
   /** Photos of the property and surroundings, sent when a guest asks for more photos / the property / nearby places. */
   propertyImages?: RoomImage[];

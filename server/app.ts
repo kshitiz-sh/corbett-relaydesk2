@@ -986,7 +986,42 @@ export function createApiApp(): Express {
         latencyMs: aiResult.latencyMs,
       };
 
-      await Promise.all([recordPromise, addWebhookLog(logEntry)]);
+      const [recordedThread] = await Promise.all([recordPromise, addWebhookLog(logEntry)]);
+
+      // Lead alert: tell the owner's sales contact when a guest shows real booking interest (once per 12h per guest).
+      try {
+        const alertPhone = (client.leadAlertPhone || process.env.LEAD_ALERT_PHONE || '').replace(/[^\d]/g, '');
+        const hasDetails = Boolean(aiResult.detectedDate || aiResult.detectedGuestCount);
+        const isLead = alertPhone && !senderPhone.replace(/[^\d]/g, '').endsWith(alertPhone.slice(-10)) &&
+          ['booking', 'handoff'].includes(aiResult.intent) &&
+          (hasDetails || aiResult.handoffTriggered || /book|reserve|available|availability|confirm/i.test(incomingText));
+        const recentAlert = (recordedThread?.messages || []).some(
+          (m) => m.role === 'alert' && m.id.startsWith('msg-lead-') && Date.now() - new Date(m.timestamp).getTime() < 12 * 3600 * 1000,
+        );
+        if (isLead && !recentAlert && recordedThread?.id) {
+          const alertText = [
+            `🔔 New Lead – ${client.businessName}`,
+            `Guest: ${senderName || 'Unknown'} (+${senderPhone.replace(/[^\d]/g, '')})`,
+            `Interested in: ${aiResult.detectedServiceOrRoom || 'Not specified yet'}`,
+            `Dates: ${aiResult.detectedDate || 'Not shared yet'}`,
+            `Guests: ${aiResult.detectedGuestCount || 'Not shared yet'}`,
+            `Guest said: "${incomingText.trim().slice(0, 200)}"`,
+            `Bot replied: "${aiResult.reply.slice(0, 200)}"`,
+            `Chat: wa.me/${senderPhone.replace(/[^\d]/g, '')}`,
+          ].join('\n');
+          const alertDelivery = await sendWhatsAppCloudReply(resolvedPhoneNumberId, alertPhone, alertText);
+          if (!alertDelivery.sent) console.error('Lead alert failed:', alertDelivery.detail);
+          await appendMessageToConversation(recordedThread.id, {
+            id: `msg-lead-${Date.now()}`,
+            role: 'alert',
+            text: `Lead alert ${alertDelivery.sent ? 'sent to' : 'FAILED for'} +${alertPhone}`,
+            timestamp: new Date().toISOString(),
+            deliveryStatus: alertDelivery.sent ? 'graph-api-sent' : 'failed',
+          });
+        }
+      } catch (leadError) {
+        console.error('Lead alert error:', leadError);
+      }
 
       res.status(200).json({
         status: 'processed',
