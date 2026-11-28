@@ -186,6 +186,9 @@ export function buildSystemInstruction(client: ClientBotConfig): string {
     client.roomImages && client.roomImages.length > 0
       ? '6. Room photos are sent automatically after your reply. Set sendRoomPhotos=true ONLY when the customer asks about rooms, stay options, accommodation, or asks to see photos; otherwise false. Do not say you are attaching photos unless sendRoomPhotos is true.'
       : '',
+    client.propertyImages && client.propertyImages.length > 0
+      ? '7. Property photos are sent automatically after your reply. Set sendPropertyPhotos=true ONLY when the customer asks for more photos, pictures of the property/homestay/terrace/food area, or the surroundings (e.g. waterfall, views). Otherwise false.'
+      : '',
   ]
     .filter((line) => line !== undefined)
     .join('\n');
@@ -229,6 +232,10 @@ async function generateBotReplyInner(
           intent: {
             type: Type.STRING,
             description: 'Short lowercase category: booking, pricing, hours_location, faq, support, handoff, or greeting.',
+          },
+          sendPropertyPhotos: {
+            type: Type.BOOLEAN,
+            description: 'True only if the customer asks for more photos of the property or surroundings.',
           },
           sendRoomPhotos: {
             type: Type.BOOLEAN,
@@ -296,6 +303,7 @@ async function generateBotReplyInner(
     reply: parsed.reply || client.fallbackMessage,
     intent: parsed.intent || 'general',
     sendRoomPhotos: Boolean(parsed.sendRoomPhotos) && (client.roomImages?.length ?? 0) > 0,
+    sendPropertyPhotos: Boolean(parsed.sendPropertyPhotos) && (client.propertyImages?.length ?? 0) > 0,
     handoffTriggered: Boolean(parsed.handoffTriggered),
     handoffReason: parsed.handoffReason || '',
     quickReplies: Array.isArray(parsed.quickReplies) ? parsed.quickReplies.slice(0, 3) : [],

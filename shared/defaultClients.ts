@@ -4,6 +4,14 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
   {
     id: 'cli-corbett-rajae-homestay',
     slug: 'corbett-rajae-homestay',
+    propertyImages: [
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/property/property-exterior.jpg', caption: 'The Corbett Rajae Homestay' },
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/property/terrace-kitchen.jpg', caption: 'Terrace & Pahadi Kitchen' },
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/property/terrace-night.jpg', caption: 'Terrace at night' },
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/property/corridor.jpg', caption: 'Balcony corridor with valley views' },
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/property/waterfall.jpg', caption: 'Nearby waterfall' },
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/property/sunrise-view.jpg', caption: 'Sunrise view of the valley' },
+    ],
     roomImages: [
       { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/family-room-1.jpg', caption: 'Family 2 Room Set with Private Terrace & Balcony – ₹7,000/night with breakfast (4 guests)' },
       { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/premium-cozy-room-1.jpg', caption: 'Premium Cozy Room with Balcony – ₹2,500/night with breakfast (2 guests)' },

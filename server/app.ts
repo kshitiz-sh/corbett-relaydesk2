@@ -944,6 +944,12 @@ export function createApiApp(): Express {
         }
       }
 
+      if (delivery.sent && aiResult.sendPropertyPhotos && !aiResult.sendRoomPhotos && client.propertyImages?.length) {
+        for (const image of client.propertyImages.slice(0, 6)) {
+          await sendWhatsAppCloudImage(resolvedPhoneNumberId, senderPhone, image.url, image.caption);
+        }
+      }
+
       const recordPromise = recordConversationExchange({
         clientId: client.id,
         customerPhone: senderPhone,
