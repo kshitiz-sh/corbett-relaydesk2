@@ -847,11 +847,10 @@ export function createApiApp(): Express {
       }
 
       const slugParam = req.params.slug;
-      const allClients = await listClients();
       const client =
         (slugParam ? await getClientBySlugOrPhoneId(slugParam) : undefined) ||
         (metadataPhoneId ? await getClientBySlugOrPhoneId(metadataPhoneId) : undefined) ||
-        allClients[0];
+        (await listClients())[0];
 
       if (!client) {
         res.status(404).json({ error: 'No matching client bot found for webhook.' });
@@ -861,14 +860,17 @@ export function createApiApp(): Express {
         res.status(400).json({ error: 'Webhook message id is required.' });
         return;
       }
-      if (!(await claimWebhookMessage(incomingMsg.id, client.id))) {
+      const senderPhone = incomingMsg.from || '+15550199999';
+      const senderName = change?.contacts?.[0]?.profile?.name;
+      // Run the duplicate check and the thread lookup at the same time (saves a database round trip).
+      const [claimed, existingThread] = await Promise.all([
+        claimWebhookMessage(incomingMsg.id, client.id),
+        getConversationByCustomer(client.id, senderPhone),
+      ]);
+      if (!claimed) {
         res.status(200).json({ status: 'deduplicated', messageId: incomingMsg.id });
         return;
       }
-
-      const senderPhone = incomingMsg.from || '+15550199999';
-      const senderName = change?.contacts?.[0]?.profile?.name;
-      const existingThread = await getConversationByCustomer(client.id, senderPhone);
 
       if (existingThread?.botPaused) {
         await recordConversationExchange({
@@ -907,7 +909,7 @@ export function createApiApp(): Express {
         aiResult.reply,
       );
 
-      await recordConversationExchange({
+      const recordPromise = recordConversationExchange({
         clientId: client.id,
         customerPhone: senderPhone,
         customerName: senderName,
@@ -943,7 +945,7 @@ export function createApiApp(): Express {
         latencyMs: aiResult.latencyMs,
       };
 
-      await addWebhookLog(logEntry);
+      await Promise.all([recordPromise, addWebhookLog(logEntry)]);
 
       res.status(200).json({
         status: 'processed',
