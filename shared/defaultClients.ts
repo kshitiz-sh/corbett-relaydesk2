@@ -5,6 +5,7 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
     id: 'cli-corbett-rajae-homestay',
     slug: 'corbett-rajae-homestay',
     roomImages: [
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/premium-cozy-room-1.jpg', caption: 'Premium Cozy Room with Balcony – ₹2,500/night with breakfast (2 guests)' },
       { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/premium-room-1.jpg', caption: 'Premium Spacious Room – ₹3,500/night with breakfast (3 guests)' },
     ],
     businessName: 'The Corbett Rajae Homestay',
@@ -24,11 +25,11 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
     services: [
       {
         id: 'srv-corbett-1',
-        name: 'Cozy Room with Valley View',
-        price: '₹2,100 – ₹2,800 / night (seasonal)',
-        duration: '2–3 guests',
+        name: 'Premium Cozy Room with Balcony',
+        price: '₹2,500 / room / night (stay with breakfast, 2 persons)',
+        duration: '2 guests',
         description:
-          'King bed with panoramic mountain and valley views, free Wi-Fi, daily housekeeping, and quiet forest surroundings.',
+          'Premium cozy room with balcony, 2 persons max, stay with breakfast. Extra person or child above 8 years: ₹800/person/room/night (stay only) or ₹1,000/person/room/night (stay with breakfast).',
       },
       {
         id: 'srv-corbett-2',
