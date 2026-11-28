@@ -5,6 +5,7 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
     id: 'cli-corbett-rajae-homestay',
     slug: 'corbett-rajae-homestay',
     roomImages: [
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/family-room-1.jpg', caption: 'Family 2 Room Set with Private Terrace & Balcony – ₹7,000/night with breakfast (4 guests)' },
       { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/premium-cozy-room-1.jpg', caption: 'Premium Cozy Room with Balcony – ₹2,500/night with breakfast (2 guests)' },
       { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/premium-room-1.jpg', caption: 'Premium Spacious Room – ₹3,500/night with breakfast (3 guests)' },
     ],
@@ -41,11 +42,11 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
       },
       {
         id: 'srv-corbett-3',
-        name: 'Family Deluxe Room (Two-Room Set)',
-        price: '₹3,500 – ₹3,900+ / night (seasonal)',
-        duration: '4–6 guests',
+        name: 'Family 2 Room Set with Private Terrace & Balcony',
+        price: '₹7,000 / set / night (stay with breakfast, 4 persons)',
+        duration: '4 guests',
         description:
-          'Ideal for families or small groups with multiple beds, expansive forest/mountain vistas, and shared lounge access.',
+          'Family set of 2 spacious rooms with private terrace and private balcony, deluxe king/queen-size beds, attached balcony/terrace and private washrooms. 4 persons only, stay with breakfast.',
       },
       {
         id: 'srv-corbett-4',
