@@ -141,6 +141,34 @@ async function sendWhatsAppCloudReply(
   return { sent: true };
 }
 
+async function sendWhatsAppCloudImage(
+  phoneNumberId: string,
+  recipientPhone: string,
+  imageUrl: string,
+  caption?: string,
+): Promise<boolean> {
+  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const normalizedTo = recipientPhone.replace(/[^\d]/g, '');
+  if (!accessToken || !phoneNumberId || !normalizedTo || !/^https:\/\//i.test(imageUrl)) return false;
+  try {
+    const response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: normalizedTo,
+        type: 'image',
+        image: { link: imageUrl, ...(caption ? { caption: caption.slice(0, 1000) } : {}) },
+      }),
+    });
+    if (!response.ok) console.error('WhatsApp image send failed:', response.status, (await response.text()).slice(0, 300));
+    return response.ok;
+  } catch (error) {
+    console.error('WhatsApp image send error:', error);
+    return false;
+  }
+}
+
 export function createApiApp(): Express {
   if (process.env.NODE_ENV === 'production') {
     const required = [
@@ -908,6 +936,13 @@ export function createApiApp(): Express {
         senderPhone,
         aiResult.reply,
       );
+
+      // Send room photos (after the text reply) when the guest asked about rooms.
+      if (delivery.sent && aiResult.sendRoomPhotos && client.roomImages?.length) {
+        for (const image of client.roomImages.slice(0, 4)) {
+          await sendWhatsAppCloudImage(resolvedPhoneNumberId, senderPhone, image.url, image.caption);
+        }
+      }
 
       const recordPromise = recordConversationExchange({
         clientId: client.id,

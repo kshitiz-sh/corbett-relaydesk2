@@ -61,6 +61,8 @@ export interface ClientPortalAuth {
 }
 
 export interface ClientBotConfig {
+  /** Photos sent automatically on WhatsApp when a guest asks about rooms (public https URLs). */
+  roomImages?: RoomImage[];
   id: string;
   slug: string;
   businessName: string;
@@ -104,8 +106,14 @@ export interface SimulationMessage {
   latencyMs?: number;
 }
 
+export interface RoomImage {
+  url: string;
+  caption?: string;
+}
+
 export interface SimulationResponse {
   reply: string;
+  sendRoomPhotos?: boolean;
   intent: string;
   handoffTriggered: boolean;
   handoffReason: string;

@@ -183,6 +183,9 @@ export function buildSystemInstruction(client: ClientBotConfig): string {
     '3. Never invent prices, policies, availability, or claims outside the provided business data and knowledge base. If a detail is missing, say you will verify with the team and trigger handoff.',
     '4. Provide up to 3 short, natural quickReplies (under 24 characters each) that the customer might tap next.',
     '5. In sourcesUsed, list the exact Document title(s) from BUSINESS KNOWLEDGE BASE that you relied on (or an empty array if none were needed).',
+    client.roomImages && client.roomImages.length > 0
+      ? '6. Room photos are sent automatically after your reply. Set sendRoomPhotos=true ONLY when the customer asks about rooms, stay options, accommodation, or asks to see photos; otherwise false. Do not say you are attaching photos unless sendRoomPhotos is true.'
+      : '',
   ]
     .filter((line) => line !== undefined)
     .join('\n');
@@ -226,6 +229,10 @@ async function generateBotReplyInner(
           intent: {
             type: Type.STRING,
             description: 'Short lowercase category: booking, pricing, hours_location, faq, support, handoff, or greeting.',
+          },
+          sendRoomPhotos: {
+            type: Type.BOOLEAN,
+            description: 'True only if the customer asks about rooms, accommodation, or photos and room photos should be sent after this reply.',
           },
           handoffTriggered: {
             type: Type.BOOLEAN,
@@ -288,6 +295,7 @@ async function generateBotReplyInner(
   return {
     reply: parsed.reply || client.fallbackMessage,
     intent: parsed.intent || 'general',
+    sendRoomPhotos: Boolean(parsed.sendRoomPhotos) && (client.roomImages?.length ?? 0) > 0,
     handoffTriggered: Boolean(parsed.handoffTriggered),
     handoffReason: parsed.handoffReason || '',
     quickReplies: Array.isArray(parsed.quickReplies) ? parsed.quickReplies.slice(0, 3) : [],

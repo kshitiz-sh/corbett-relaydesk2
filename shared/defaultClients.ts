@@ -4,6 +4,9 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
   {
     id: 'cli-corbett-rajae-homestay',
     slug: 'corbett-rajae-homestay',
+    roomImages: [
+      { url: 'https://corbett-rajae-relaydesk.vercel.app/rooms/premium-room-1.jpg', caption: 'Premium Spacious Room – ₹3,500/night with breakfast (3 guests)' },
+    ],
     businessName: 'The Corbett Rajae Homestay',
     industry: 'Restaurants & Hospitality',
     tagline: 'Peaceful Himalayan forest retreat near Kalagarh Tiger Reserve & Jim Corbett',
@@ -29,11 +32,11 @@ export const DEFAULT_CLIENTS: ClientBotConfig[] = [
       },
       {
         id: 'srv-corbett-2',
-        name: 'Premium Spacious Room with Terrace',
-        price: '₹2,800 – ₹3,500 / night (seasonal)',
-        duration: '2–3 guests',
+        name: 'Premium Spacious Room',
+        price: '₹3,500 / room / night (stay with breakfast, up to 3 persons)',
+        duration: 'Up to 3 guests',
         description:
-          'Spacious room featuring a private attached balcony/terrace overlooking the Himalayan foothills and greenery.',
+          'Premium spacious room, 3 persons max, stay with breakfast. Extra person or child above 8 years: ₹800/person/room/night (stay only) or ₹1,000/person/room/night (stay with breakfast).',
       },
       {
         id: 'srv-corbett-3',
